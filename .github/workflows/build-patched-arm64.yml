@@ -154,3 +154,15 @@ jobs:
         with:
           name: apk-arm64-cellular
           path: ${{ steps.findapk.outputs.APK_FILE }}
+
+      - name: Publish APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: cellular-${{ github.event.inputs.release_tag || 'v2.11.33' }}-${{ github.run_number }}
+          name: Clash Meta Cellular ${{ github.event.inputs.release_tag || 'v2.11.33' }} build ${{ github.run_number }}
+          body: |
+            Auto build from workflow run ${{ github.run_id }}.
+            Upstream tag: ${{ github.event.inputs.release_tag || 'v2.11.33' }}
+            Commit: ${{ github.sha }}
+          prerelease: true
+          files: ${{ steps.findapk.outputs.APK_FILE }}
