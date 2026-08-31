@@ -1,6 +1,6 @@
 diff -ruN --exclude=.git a/.github/workflows/build-arm64.yml b/.github/workflows/build-arm64.yml
 --- a/.github/workflows/build-arm64.yml	1970-01-01 08:00:00
-+++ b/.github/workflows/build-arm64.yml	2026-08-31 22:48:54
++++ b/.github/workflows/build-arm64.yml	2026-08-31 23:38:28
 @@ -0,0 +1,77 @@
 +name: Build arm64 APK
 +
@@ -81,7 +81,7 @@ diff -ruN --exclude=.git a/.github/workflows/build-arm64.yml b/.github/workflows
 +            app/build/outputs/**/*.apk
 diff -ruN --exclude=.git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
 --- a/app/src/main/AndroidManifest.xml	2026-08-16 17:45:50
-+++ b/app/src/main/AndroidManifest.xml	2026-08-31 22:48:54
++++ b/app/src/main/AndroidManifest.xml	2026-08-31 23:38:28
 @@ -178,6 +178,11 @@
              android:exported="false"
              android:label="@string/access_control_packages" />
@@ -96,7 +96,7 @@ diff -ruN --exclude=.git a/app/src/main/AndroidManifest.xml b/app/src/main/Andro
              android:exported="false"
 diff -ruN --exclude=.git a/app/src/main/java/com/github/kr328/clash/MobileNetworkAccessControlActivity.kt b/app/src/main/java/com/github/kr328/clash/MobileNetworkAccessControlActivity.kt
 --- a/app/src/main/java/com/github/kr328/clash/MobileNetworkAccessControlActivity.kt	1970-01-01 08:00:00
-+++ b/app/src/main/java/com/github/kr328/clash/MobileNetworkAccessControlActivity.kt	2026-08-31 22:48:54
++++ b/app/src/main/java/com/github/kr328/clash/MobileNetworkAccessControlActivity.kt	2026-08-31 23:38:28
 @@ -0,0 +1,150 @@
 +package com.github.kr328.clash
 +
@@ -251,7 +251,7 @@ diff -ruN --exclude=.git a/app/src/main/java/com/github/kr328/clash/MobileNetwor
 \ No newline at end of file
 diff -ruN --exclude=.git a/app/src/main/java/com/github/kr328/clash/NetworkSettingsActivity.kt b/app/src/main/java/com/github/kr328/clash/NetworkSettingsActivity.kt
 --- a/app/src/main/java/com/github/kr328/clash/NetworkSettingsActivity.kt	2026-08-16 17:45:50
-+++ b/app/src/main/java/com/github/kr328/clash/NetworkSettingsActivity.kt	2026-08-31 22:48:54
++++ b/app/src/main/java/com/github/kr328/clash/NetworkSettingsActivity.kt	2026-08-31 23:38:28
 @@ -30,6 +30,8 @@
                      when (it) {
                          NetworkSettingsDesign.Request.StartAccessControlList ->
@@ -261,9 +261,21 @@ diff -ruN --exclude=.git a/app/src/main/java/com/github/kr328/clash/NetworkSetti
                      }
                  }
              }
+diff -ruN --exclude=.git a/build.gradle.kts b/build.gradle.kts
+--- a/build.gradle.kts	2026-08-16 17:45:50
++++ b/build.gradle.kts	2026-08-31 23:38:28
+@@ -129,7 +129,7 @@
+                 resValue("string", "application_name", "@string/application_name_meta")
+ 
+                 if (isApp && !removeSuffix) {
+-                    applicationIdSuffix = ".meta"
++                    applicationIdSuffix = ".meta.cellular"
+                 }
+             }
+         }
 diff -ruN --exclude=.git a/core/src/foss/golang/clash/adapter/outbound/direct.go b/core/src/foss/golang/clash/adapter/outbound/direct.go
 --- a/core/src/foss/golang/clash/adapter/outbound/direct.go	2026-08-16 16:35:56
-+++ b/core/src/foss/golang/clash/adapter/outbound/direct.go	2026-08-31 22:48:54
++++ b/core/src/foss/golang/clash/adapter/outbound/direct.go	2026-08-31 23:38:28
 @@ -3,7 +3,12 @@
  import (
  	"context"
@@ -329,7 +341,7 @@ diff -ruN --exclude=.git a/core/src/foss/golang/clash/adapter/outbound/direct.go
  // ListenPacketContext implements C.ProxyAdapter
 diff -ruN --exclude=.git a/core/src/main/cpp/main.c b/core/src/main/cpp/main.c
 --- a/core/src/main/cpp/main.c	2026-08-16 17:45:50
-+++ b/core/src/main/cpp/main.c	2026-08-31 22:48:54
++++ b/core/src/main/cpp/main.c	2026-08-31 23:38:28
 @@ -394,6 +394,7 @@
  
  static jmethodID m_tun_interface_mark_socket;
@@ -385,7 +397,7 @@ diff -ruN --exclude=.git a/core/src/main/cpp/main.c b/core/src/main/cpp/main.c
      fetch_complete_func = &call_fetch_callback_complete_impl;
 diff -ruN --exclude=.git a/core/src/main/golang/native/app/tun.go b/core/src/main/golang/native/app/tun.go
 --- a/core/src/main/golang/native/app/tun.go	2026-08-16 17:45:50
-+++ b/core/src/main/golang/native/app/tun.go	2026-08-31 22:48:54
++++ b/core/src/main/golang/native/app/tun.go	2026-08-31 23:38:28
 @@ -9,6 +9,7 @@
  
  var markSocketImpl func(fd int)
@@ -426,7 +438,7 @@ diff -ruN --exclude=.git a/core/src/main/golang/native/app/tun.go b/core/src/mai
  }
 diff -ruN --exclude=.git a/core/src/main/golang/native/bridge.c b/core/src/main/golang/native/bridge.c
 --- a/core/src/main/golang/native/bridge.c	2026-08-16 17:45:50
-+++ b/core/src/main/golang/native/bridge.c	2026-08-31 22:48:54
++++ b/core/src/main/golang/native/bridge.c	2026-08-31 23:38:28
 @@ -108,6 +108,19 @@
      free(msg);
  }
@@ -449,7 +461,7 @@ diff -ruN --exclude=.git a/core/src/main/golang/native/bridge.c b/core/src/main/
  
 diff -ruN --exclude=.git a/core/src/main/golang/native/bridge.h b/core/src/main/golang/native/bridge.h
 --- a/core/src/main/golang/native/bridge.h	2026-08-16 17:45:50
-+++ b/core/src/main/golang/native/bridge.h	2026-08-31 22:48:54
++++ b/core/src/main/golang/native/bridge.h	2026-08-31 23:38:28
 @@ -25,6 +25,8 @@
  
  extern int (*open_content_func)(const char *url, char *error, int error_length);
@@ -470,7 +482,7 @@ diff -ruN --exclude=.git a/core/src/main/golang/native/bridge.h b/core/src/main/
  
 diff -ruN --exclude=.git a/core/src/main/golang/native/tun.go b/core/src/main/golang/native/tun.go
 --- a/core/src/main/golang/native/tun.go	2026-08-16 17:45:50
-+++ b/core/src/main/golang/native/tun.go	2026-08-31 22:48:54
++++ b/core/src/main/golang/native/tun.go	2026-08-31 23:38:28
 @@ -48,6 +48,17 @@
  	return int(C.query_socket_uid(t.callback, C.int(protocol), C.CString(source), C.CString(target)))
  }
@@ -509,7 +521,7 @@ diff -ruN --exclude=.git a/core/src/main/golang/native/tun.go b/core/src/main/go
  	if err != nil {
 diff -ruN --exclude=.git a/core/src/main/java/com/github/kr328/clash/core/Clash.kt b/core/src/main/java/com/github/kr328/clash/core/Clash.kt
 --- a/core/src/main/java/com/github/kr328/clash/core/Clash.kt	2026-08-16 17:45:50
-+++ b/core/src/main/java/com/github/kr328/clash/core/Clash.kt	2026-08-31 22:48:54
++++ b/core/src/main/java/com/github/kr328/clash/core/Clash.kt	2026-08-31 23:38:28
 @@ -71,7 +71,8 @@
          portal: String,
          dns: String,
@@ -537,7 +549,7 @@ diff -ruN --exclude=.git a/core/src/main/java/com/github/kr328/clash/core/Clash.
                      parseInetSocketAddress(target)
 diff -ruN --exclude=.git a/core/src/main/java/com/github/kr328/clash/core/bridge/TunInterface.kt b/core/src/main/java/com/github/kr328/clash/core/bridge/TunInterface.kt
 --- a/core/src/main/java/com/github/kr328/clash/core/bridge/TunInterface.kt	2026-08-16 17:45:50
-+++ b/core/src/main/java/com/github/kr328/clash/core/bridge/TunInterface.kt	2026-08-31 22:48:54
++++ b/core/src/main/java/com/github/kr328/clash/core/bridge/TunInterface.kt	2026-08-31 23:38:28
 @@ -6,4 +6,5 @@
  interface TunInterface {
      fun markSocket(fd: Int)
@@ -547,7 +559,7 @@ diff -ruN --exclude=.git a/core/src/main/java/com/github/kr328/clash/core/bridge
 \ No newline at end of file
 diff -ruN --exclude=.git a/design/src/main/java/com/github/kr328/clash/design/NetworkSettingsDesign.kt b/design/src/main/java/com/github/kr328/clash/design/NetworkSettingsDesign.kt
 --- a/design/src/main/java/com/github/kr328/clash/design/NetworkSettingsDesign.kt	2026-08-16 17:45:50
-+++ b/design/src/main/java/com/github/kr328/clash/design/NetworkSettingsDesign.kt	2026-08-31 22:48:54
++++ b/design/src/main/java/com/github/kr328/clash/design/NetworkSettingsDesign.kt	2026-08-31 23:38:28
 @@ -22,7 +22,8 @@
      running: Boolean,
  ) : Design<NetworkSettingsDesign.Request>(context) {
@@ -576,7 +588,17 @@ diff -ruN --exclude=.git a/design/src/main/java/com/github/kr328/clash/design/Ne
  
 diff -ruN --exclude=.git a/design/src/main/res/values/strings.xml b/design/src/main/res/values/strings.xml
 --- a/design/src/main/res/values/strings.xml	2026-08-16 17:45:50
-+++ b/design/src/main/res/values/strings.xml	2026-08-31 22:48:54
++++ b/design/src/main/res/values/strings.xml	2026-08-31 23:38:28
+@@ -1,7 +1,7 @@
+ <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="PluralsCandidate">
+-    <string name="launch_name_meta">Clash Meta</string>
++    <string name="launch_name_meta">Clash Meta Cellular</string>
+     <string name="launch_name_alpha">Clash Meta Alpha</string>
+-    <string name="application_name_meta">Clash Meta for Android</string>
++    <string name="application_name_meta">Clash Meta Cellular</string>
+     <string name="application_name_alpha">Clash Meta for Android Alpha</string>
+ 
+     <string name="stopped">Stopped</string>
 @@ -146,6 +146,8 @@
      <string name="access_control_mode">Access Control Mode</string>
      <string name="access_control_packages">Access Control Packages</string>
@@ -588,7 +610,7 @@ diff -ruN --exclude=.git a/design/src/main/res/values/strings.xml b/design/src/m
  
 diff -ruN --exclude=.git a/design/src/main/res/values-zh/strings.xml b/design/src/main/res/values-zh/strings.xml
 --- a/design/src/main/res/values-zh/strings.xml	2026-08-16 17:45:50
-+++ b/design/src/main/res/values-zh/strings.xml	2026-08-31 22:48:54
++++ b/design/src/main/res/values-zh/strings.xml	2026-08-31 23:38:28
 @@ -4,6 +4,8 @@
      <string name="about">关于</string>
      <string name="access_control_mode">访问控制模式</string>
@@ -600,7 +622,7 @@ diff -ruN --exclude=.git a/design/src/main/res/values-zh/strings.xml b/design/sr
      <string name="auto_update">自动更新</string>
 diff -ruN --exclude=.git a/service/src/main/java/com/github/kr328/clash/service/clash/module/TunModule.kt b/service/src/main/java/com/github/kr328/clash/service/clash/module/TunModule.kt
 --- a/service/src/main/java/com/github/kr328/clash/service/clash/module/TunModule.kt	2026-08-16 17:45:50
-+++ b/service/src/main/java/com/github/kr328/clash/service/clash/module/TunModule.kt	2026-08-31 22:48:54
++++ b/service/src/main/java/com/github/kr328/clash/service/clash/module/TunModule.kt	2026-08-31 23:38:28
 @@ -6,6 +6,7 @@
  import androidx.core.content.getSystemService
  import com.github.kr328.clash.core.Clash
@@ -686,7 +708,7 @@ diff -ruN --exclude=.git a/service/src/main/java/com/github/kr328/clash/service/
      suspend fun close() {
 diff -ruN --exclude=.git a/service/src/main/java/com/github/kr328/clash/service/store/ServiceStore.kt b/service/src/main/java/com/github/kr328/clash/service/store/ServiceStore.kt
 --- a/service/src/main/java/com/github/kr328/clash/service/store/ServiceStore.kt	2026-08-16 17:45:50
-+++ b/service/src/main/java/com/github/kr328/clash/service/store/ServiceStore.kt	2026-08-31 22:48:54
++++ b/service/src/main/java/com/github/kr328/clash/service/store/ServiceStore.kt	2026-08-31 23:38:28
 @@ -36,6 +36,11 @@
          defaultValue = emptySet()
      )
