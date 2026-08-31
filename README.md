@@ -2,6 +2,19 @@
 
 This repository is a **patch-only** overlay for the upstream **MetaCubeX/ClashMetaForAndroid** project.
 
+## Feature requirements
+
+The goal of this project is to add a cellular-specific build and a per-app mobile-network routing feature:
+
+- Add a **Network** settings entry named **Use mobile network**.
+- Tapping it should open an **app selection** screen similar to **Access Control**.
+- The selected apps are stored in `ServiceStore.mobileNetworkPackages`.
+- At runtime, outbound connections for the selected apps should be bound to the device’s **default cellular network**.
+- The binding should use the Android `Network.socketFactory` path, not an explicit subscription ID.
+- If the device is already on mobile data or Wi‑Fi is unavailable, the feature should not break connectivity; it should fall back safely.
+- The installed app name should be **Clash Meta Cellular**.
+- The generated APK should be renamed with a **`-Cellular`** suffix.
+
 ## Maintenance model
 
 - **Only the `main` branch is used.**
