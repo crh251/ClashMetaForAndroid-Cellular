@@ -16,8 +16,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GRADLE_USER_HOME: ${{ runner.temp }}/.gradle
-      GOMODCACHE: ${{ runner.temp }}/gopath/pkg/mod
+      GRADLE_USER_HOME: ${{ github.workspace }}/.gradle
+      GOMODCACHE: ${{ github.workspace }}/.gopath/pkg/mod
 
     steps:
       - name: Checkout this repo (patches)
