@@ -24,14 +24,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download upstream tarball
-        run: |
-          set -euo pipefail
-          echo "Downloading upstream MetaCubeX/ClashMetaForAndroid@${{ inputs.release_tag }} into ./src"
-          mkdir -p src
-          URL="https://github.com/MetaCubeX/ClashMetaForAndroid/archive/refs/tags/${{ inputs.release_tag }}.tar.gz"
-          curl -fsSL "$URL" -o /tmp/src.tar.gz
-          tar -xzf /tmp/src.tar.gz -C src --strip-components=1
+      - name: Checkout upstream source with submodules
+        uses: actions/checkout@v4
+        with:
+          repository: MetaCubeX/ClashMetaForAndroid
+          ref: ${{ inputs.release_tag }}
+          submodules: recursive
+          path: src
+          fetch-depth: 0
 
       - name: "Determine patch to apply (strict: require versioned patch)"
         id: patch
