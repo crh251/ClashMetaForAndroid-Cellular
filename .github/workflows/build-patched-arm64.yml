@@ -18,10 +18,6 @@ jobs:
   build-arm64-patched:
     runs-on: ubuntu-latest
 
-    env:
-      GRADLE_USER_HOME: ${{ github.workspace }}/.gradle
-      GOMODCACHE: ${{ github.workspace }}/.gopath/pkg/mod
-
     steps:
       - name: Checkout this repo (patches)
         uses: actions/checkout@v4
@@ -84,56 +80,53 @@ jobs:
             sed -i 's@android:label="@string/application_name"@android:label="Clash Meta Cellular"@g' "$MANIFEST" || true
           fi
 
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "21"
 
-      - name: Install Android SDK and NDK
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-download-base-url: 'https://github.com/MetaCubeX/go/releases/download/build'
+          go-version: '1.26'
+
+      - name: Apply Go Patches from upstream
         run: |
           set -euo pipefail
-          SDK_ROOT="$HOME/android-sdk"
-          mkdir -p "$SDK_ROOT/cmdline-tools"
-          cd /tmp
-          curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
-          unzip -q cmdline-tools.zip
-          mv cmdline-tools "$SDK_ROOT/cmdline-tools/latest"
-          export ANDROID_SDK_ROOT="$SDK_ROOT"
-          export PATH="$SDK_ROOT/cmdline-tools/latest/bin:$SDK_ROOT/platform-tools:$PATH"
-          set +o pipefail
-          yes | sdkmanager --licenses >/dev/null
-          set -o pipefail
-          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;23.1.7779620"
-          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
-          echo "$SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
-          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+          cd $(go env GOROOT)
+          if [ -d "${{ github.workspace }}/src/.github/patch" ]; then
+            for p in ${{ github.workspace }}/src/.github/patch/*.patch; do
+              if [ -f "$p" ]; then
+                echo "Applying Go patch: $p"
+                patch --verbose -p 1 < "$p"
+              fi
+            done
+          fi
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.GRADLE_USER_HOME }}/caches
-            ${{ env.GRADLE_USER_HOME }}/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('src/**/build.gradle*', 'src/**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Update CA certificates
+        working-directory: src
+        run: |
+          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y ca-certificates
+          sudo update-ca-certificates
+          mkdir -p core/src/foss/golang/clash/component/ca
+          cp -f /etc/ssl/certs/ca-certificates.crt core/src/foss/golang/clash/component/ca/ca-certificates.crt
 
       - name: Ensure gradlew is executable
         run: |
           if [ -f src/gradlew ]; then chmod +x src/gradlew; fi
 
-      - name: Build arm64 APK (assembleRelease)
+      - name: Build arm64 APK (assembleMetaRelease)
         working-directory: src
         run: |
           set -euo pipefail
-          echo "Building arm64-v8a APK (arm64 only)"
-          if [ -f ./gradlew ]; then
-            ./gradlew clean assembleRelease -PabiFilters=arm64-v8a --no-daemon --stacktrace
-          else
-            echo "No gradlew in upstream source; aborting"
-            exit 1
-          fi
+          echo "Building arm64-v8a APK (assembleMetaRelease)"
+          ./gradlew app:assembleMetaRelease -PabiFilters=arm64-v8a --no-daemon --stacktrace
 
       - name: Find and rename APK to add -Cellular suffix
         id: findapk
