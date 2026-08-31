@@ -1,6 +1,8 @@
 name: Build patched ClashMeta (arm64)
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
     inputs:
       release_tag:
@@ -28,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: MetaCubeX/ClashMetaForAndroid
-          ref: ${{ inputs.release_tag }}
+          ref: ${{ github.event.inputs.release_tag || 'v2.11.33' }}
           submodules: recursive
           path: src
           fetch-depth: 0
@@ -37,11 +39,12 @@ jobs:
         id: patch
         run: |
           set -euo pipefail
-          PATCH_FILE="patches/${{ inputs.release_tag }}.patch"
+          RELEASE_TAG="${{ github.event.inputs.release_tag || 'v2.11.33' }}"
+          PATCH_FILE="patches/${RELEASE_TAG}.patch"
           if [ -f "${{ github.workspace }}/$PATCH_FILE" ]; then
             PATCH="$PATCH_FILE"
           else
-            echo "No patch found for upstream tag '${{ inputs.release_tag }}'."
+            echo "No patch found for upstream tag '${RELEASE_TAG}'."
             echo "Expected: $PATCH_FILE"
             echo "Available patches:"
             ls -la patches || true
