@@ -75,15 +75,6 @@ jobs:
             cp "$GITHUB_WORKSPACE/release.keystore" src/release.keystore
           fi
 
-      - name: Override app name to "Clash Meta Cellular" in manifest
-        run: |
-          set -euo pipefail
-          MANIFEST="src/app/src/main/AndroidManifest.xml"
-          if [ -f "$MANIFEST" ]; then
-            echo "Patching manifest label in $MANIFEST"
-            sed -i 's@android:label="@string/application_name"@android:label="Clash Meta Cellular"@g' "$MANIFEST" || true
-          fi
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
