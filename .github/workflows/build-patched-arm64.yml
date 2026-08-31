@@ -52,6 +52,7 @@ jobs:
           fi
 
           echo "patch=$PATCH" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Apply patch
         working-directory: src
@@ -135,10 +136,10 @@ jobs:
         id: findapk
         run: |
           set -euo pipefail
-          APK_PATH=$(find src/app/build/outputs -type f -name "*.apk" | grep -i release | head -n 1 || true)
+          APK_PATH=$(find src/app/build/outputs -type f -name "*arm64-v8a*release*.apk" | head -n 1 || true)
           if [ -z "$APK_PATH" ]; then
-            echo "No release APK found under src/app/build/outputs"
-            ls -la src/app/build/outputs || true
+            echo "No arm64 release APK found under src/app/build/outputs"
+            find src/app/build/outputs -type f -name "*.apk" || true
             exit 1
           fi
           echo "Found APK: $APK_PATH"
@@ -158,11 +159,11 @@ jobs:
       - name: Publish APK to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: cellular-${{ github.event.inputs.release_tag || 'v2.11.33' }}-${{ github.run_number }}
-          name: Clash Meta Cellular ${{ github.event.inputs.release_tag || 'v2.11.33' }} build ${{ github.run_number }}
+          tag_name: cellular-${{ steps.patch.outputs.release_tag }}-${{ github.run_number }}
+          name: Clash Meta Cellular ${{ steps.patch.outputs.release_tag }} build ${{ github.run_number }}
           body: |
             Auto build from workflow run ${{ github.run_id }}.
-            Upstream tag: ${{ github.event.inputs.release_tag || 'v2.11.33' }}
+            Upstream tag: ${{ steps.patch.outputs.release_tag }}
             Commit: ${{ github.sha }}
           prerelease: true
           files: ${{ steps.findapk.outputs.APK_FILE }}
