@@ -34,7 +34,7 @@ jobs:
           curl -fsSL "$URL" -o /tmp/src.tar.gz
           tar -xzf /tmp/src.tar.gz -C src --strip-components=1
 
-      - name: Determine patch to apply (strict: require versioned patch)
+      - name: "Determine patch to apply (strict: require versioned patch)"
         id: patch
         run: |
           set -euo pipefail
@@ -55,7 +55,7 @@ jobs:
         working-directory: src
         run: |
           set -euo pipefail
-          PATCH_PATH="${{ github.workspace }}/$PATCH"
+          PATCH_PATH="${{ github.workspace }}/${{ steps.patch.outputs.patch }}"
           if [ -f "$PATCH_PATH" ]; then
             echo "Applying patch: $PATCH_PATH"
             patch -p1 --batch -i "$PATCH_PATH"
