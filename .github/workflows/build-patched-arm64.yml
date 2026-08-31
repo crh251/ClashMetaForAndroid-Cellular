@@ -3,10 +3,13 @@ name: Build patched ClashMeta (arm64)
 on:
   workflow_dispatch:
     inputs:
-      upstream_tag:
-        description: 'Upstream release tag (for example v2.11.33)'
+      release_tag:
+        description: 'Upstream release tag'
         required: true
-        default: 'v2.11.33'
+        type: choice
+        default: v2.11.33
+        options:
+          - v2.11.33
 
 permissions:
   contents: write
@@ -28,9 +31,9 @@ jobs:
       - name: Download upstream tarball
         run: |
           set -euo pipefail
-          echo "Downloading upstream MetaCubeX/ClashMetaForAndroid@${{ inputs.upstream_tag }} into ./src"
+          echo "Downloading upstream MetaCubeX/ClashMetaForAndroid@${{ inputs.release_tag }} into ./src"
           mkdir -p src
-          URL="https://github.com/MetaCubeX/ClashMetaForAndroid/archive/refs/tags/${{ inputs.upstream_tag }}.tar.gz"
+          URL="https://github.com/MetaCubeX/ClashMetaForAndroid/archive/refs/tags/${{ inputs.release_tag }}.tar.gz"
           curl -fsSL "$URL" -o /tmp/src.tar.gz
           tar -xzf /tmp/src.tar.gz -C src --strip-components=1
 
@@ -38,11 +41,11 @@ jobs:
         id: patch
         run: |
           set -euo pipefail
-          PATCH_FILE="patches/${{ inputs.upstream_tag }}.patch"
+          PATCH_FILE="patches/${{ inputs.release_tag }}.patch"
           if [ -f "${{ github.workspace }}/$PATCH_FILE" ]; then
             PATCH="$PATCH_FILE"
           else
-            echo "No patch found for upstream tag '${{ inputs.upstream_tag }}'."
+            echo "No patch found for upstream tag '${{ inputs.release_tag }}'."
             echo "Expected: $PATCH_FILE"
             echo "Available patches:"
             ls -la patches || true
