@@ -1,0 +1,145 @@
+name: Build patched ClashMeta (arm64)
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_tag:
+        description: 'Upstream release tag (for example v2.11.33)'
+        required: true
+        default: 'v2.11.33'
+
+permissions:
+  contents: write
+
+jobs:
+  build-arm64-patched:
+    runs-on: ubuntu-latest
+
+    env:
+      GRADLE_USER_HOME: ${{ runner.temp }}/.gradle
+      GOMODCACHE: ${{ runner.temp }}/gopath/pkg/mod
+
+    steps:
+      - name: Checkout this repo (patches)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download upstream tarball
+        run: |
+          set -euo pipefail
+          echo "Downloading upstream MetaCubeX/ClashMetaForAndroid@${{ inputs.upstream_tag }} into ./src"
+          mkdir -p src
+          URL="https://github.com/MetaCubeX/ClashMetaForAndroid/archive/refs/tags/${{ inputs.upstream_tag }}.tar.gz"
+          curl -fsSL "$URL" -o /tmp/src.tar.gz
+          tar -xzf /tmp/src.tar.gz -C src --strip-components=1
+
+      - name: Determine patch to apply (strict: require versioned patch)
+        id: patch
+        run: |
+          set -euo pipefail
+          PATCH_FILE="patches/${{ inputs.upstream_tag }}.patch"
+          if [ -f "${{ github.workspace }}/$PATCH_FILE" ]; then
+            PATCH="$PATCH_FILE"
+          else
+            echo "No patch found for upstream tag '${{ inputs.upstream_tag }}'."
+            echo "Expected: $PATCH_FILE"
+            echo "Available patches:"
+            ls -la patches || true
+            exit 1
+          fi
+
+          echo "patch=$PATCH" >> "$GITHUB_OUTPUT"
+
+      - name: Apply patch
+        working-directory: src
+        run: |
+          set -euo pipefail
+          PATCH_PATH="${{ github.workspace }}/$PATCH"
+          if [ -f "$PATCH_PATH" ]; then
+            echo "Applying patch: $PATCH_PATH"
+            patch -p1 --batch -i "$PATCH_PATH"
+          else
+            echo "Patch not found: $PATCH_PATH - continuing without applying"
+            exit 1
+          fi
+
+      - name: Copy release keystore if present
+        run: |
+          set -euo pipefail
+          if [ -f "$GITHUB_WORKSPACE/release.keystore" ]; then
+            echo "Copying release.keystore to src/"
+            cp "$GITHUB_WORKSPACE/release.keystore" src/release.keystore
+          fi
+
+      - name: Override app name to "Clash Meta Cellular" in manifest
+        run: |
+          set -euo pipefail
+          MANIFEST="src/app/src/main/AndroidManifest.xml"
+          if [ -f "$MANIFEST" ]; then
+            echo "Patching manifest label in $MANIFEST"
+            sed -i 's@android:label="@string/application_name"@android:label="Clash Meta Cellular"@g' "$MANIFEST" || true
+          fi
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK and NDK
+        uses: r0adkll/setup-android@v2
+        with:
+          api-level: 33
+          ndk: 23.1.7779620
+          build-tools: 33.0.2
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.GRADLE_USER_HOME }}/caches
+            ${{ env.GRADLE_USER_HOME }}/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('src/**/build.gradle*', 'src/**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Ensure gradlew is executable
+        run: |
+          if [ -f src/gradlew ]; then chmod +x src/gradlew; fi
+
+      - name: Build arm64 APK (assembleRelease)
+        working-directory: src
+        run: |
+          set -euo pipefail
+          echo "Building arm64-v8a APK (arm64 only)"
+          if [ -f ./gradlew ]; then
+            ./gradlew clean assembleRelease -PabiFilters=arm64-v8a --no-daemon --stacktrace
+          else
+            echo "No gradlew in upstream source; aborting"
+            exit 1
+          fi
+
+      - name: Find and rename APK to add -Cellular suffix
+        id: findapk
+        run: |
+          set -euo pipefail
+          APK_PATH=$(find src/app/build/outputs -type f -name "*.apk" | grep -i release | head -n 1 || true)
+          if [ -z "$APK_PATH" ]; then
+            echo "No release APK found under src/app/build/outputs"
+            ls -la src/app/build/outputs || true
+            exit 1
+          fi
+          echo "Found APK: $APK_PATH"
+          DIR=$(dirname "$APK_PATH")
+          BASE=$(basename "$APK_PATH")
+          NEWNAME="${BASE%.apk}-Cellular.apk"
+          mv "$APK_PATH" "$DIR/$NEWNAME"
+          echo "Renamed to: $DIR/$NEWNAME"
+          echo "APK_FILE=$DIR/$NEWNAME" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-arm64-cellular
+          path: ${{ steps.findapk.outputs.APK_FILE }}
